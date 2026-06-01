@@ -151,94 +151,6 @@
                 btn.classList.toggle('active', btn.innerText === courseCode);
             });
             document.getElementById('essayResponse').value = '';
-            renderPortal();
-        }
-
-        function selectUnit(unitNumber) {
-            activeUnits[selectedCourse] = unitNumber;
-            document.getElementById('essayResponse').value = '';
-            renderPortal();
-        }
-
-       <script>
-        const courseData = {
-            APUSH: {
-                totalUnits: 9,
-                prompts: {
-                    1: "Analyze the social and economic impacts of the Stamp Act of 1765 on the American colonists. What was the primary catalyst for organized resistance?",
-                    2: "[APUSH Unit 2 Prompt] Enter question here.",
-                    3: "[APUSH Unit 3 Prompt] Enter question here.",
-                    4: "[APUSH Unit 4 Prompt] Enter question here.",
-                    5: "[APUSH Unit 5 Prompt] Enter question here.",
-                    6: "[APUSH Unit 6 Prompt] Enter question here.",
-                    7: "[APUSH Unit 7 Prompt] Enter question here.",
-                    8: "[APUSH Unit 8 Prompt] Enter question here.",
-                    9: "[APUSH Unit 9 Prompt] Enter question here."
-                }
-            },
-            APHUG: {
-                totalUnits: 7,
-                prompts: {
-                    1: "[APHUG Unit 1 Prompt] Enter question here.",
-                    2: "[APHUG Unit 2 Prompt] Enter question here.",
-                    3: "[APHUG Unit 3 Prompt] Enter question here.",
-                    4: "[APHUG Unit 4 Prompt] Enter question here.",
-                    5: "[APHUG Unit 5 Prompt] Enter question here.",
-                    6: "[APHUG Unit 6 Prompt] Enter question here.",
-                    7: "[APHUG Unit 7 Prompt] Enter question here."
-                }
-            },
-            USR: {
-                totalUnits: 12,
-                prompts: {
-                    1: "[USR Unit 1 Prompt] Enter question here.",
-                    2: "[USR Unit 2 Prompt] Enter question here.",
-                    3: "[USR Unit 3 Prompt] Enter question here.",
-                    4: "[USR Unit 4 Prompt] Enter question here.",
-                    5: "[USR Unit 5 Prompt] Enter question here.",
-                    6: "[USR Unit 6 Prompt] Enter question here.",
-                    7: "[USR Unit 7 Prompt] Enter question here.",
-                    8: "[USR Unit 8 Prompt] Enter question here.",
-                    9: "[USR Unit 9 Prompt] Enter question here.",
-                    10: "[USR Unit 10 Prompt] Enter question here.",
-                    11: "[USR Unit 11 Prompt] Enter question here.",
-                    12: "[USR Unit 12 Prompt] Enter question here."
-                }
-            }
-        };
-
-        // DATABASE VAULT CONFIGURATION
-        const SUPABASE_URL = "https://ucxwiywoxpeqapgwhsmi.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjeHdpeXdveHBlcWFwZ3doc21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE0NzMsImV4cCI6MjA5NTkwNzQ3M30.VToVqabwqL7d1CpBkxztJt4hCQL-koX4Eq7rd7lx9Sg";
-
-        let selectedCourse = "APUSH";
-        let activeUnits = { APUSH: 1, APHUG: 1, USR: 1 };
-
-        function renderPortal() {
-            const tabsContainer = document.getElementById('unitTabsContainer');
-            tabsContainer.innerHTML = ''; 
-            
-            const currentCourseConfig = courseData[selectedCourse];
-            const activeUnitForCourse = activeUnits[selectedCourse];
-
-            for (let i = 1; i <= currentCourseConfig.totalUnits; i++) {
-                const btn = document.createElement('button');
-                btn.className = `unit-btn ${i === activeUnitForCourse ? 'active' : ''}`;
-                btn.innerText = `Unit ${i}`;
-                btn.onclick = () => selectUnit(i);
-                tabsContainer.appendChild(btn);
-            }
-
-            document.getElementById('assignmentTitle').innerText = `${selectedCourse} - Unit ${activeUnitForCourse}`;
-            document.getElementById('assignmentPrompt').innerText = currentCourseConfig.prompts[activeUnitForCourse] || "No custom prompt entered yet.";
-        }
-
-        function selectCourse(courseCode) {
-            selectedCourse = courseCode;
-            document.querySelectorAll('.course-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText === courseCode);
-            });
-            document.getElementById('essayResponse').value = '';
             lastTextLength = 0; // Reset length tracker
             renderPortal();
         }
@@ -352,3 +264,5 @@
 
         renderPortal();
     </script>
+</body>
+</html>
