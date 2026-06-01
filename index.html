@@ -18,8 +18,7 @@
         button { width: 100%; background: #4f46e5; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s ease; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
         button:hover { background: #4338ca; }
         button:active { transform: scale(0.98); }
-        .error { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 10px; border-radius: 6px; margin-top: 1.2rem; font-size: 0.85rem; font-weight: 500; display: none; animation: shake 0.2s ease-in-out; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .error { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 10px; border-radius: 6px; margin-top: 1.2rem; font-size: 0.85rem; font-weight: 500; display: none; }
     </style>
 </head>
 <body>
@@ -39,27 +38,14 @@
     </div>
 
     <script>
-        // Password hash for: SecretClass2026
-        const correctHash = "efea28fa4bf80572da9bf7bbf3bfa099d34346bb7be07797825b59639535b91b";
-
-        async function hashPassword(string) {
-            const utf8 = new TextEncoder().encode(string);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        async function checkPassword() {
-            const userInput = document.getElementById('passwordInput').value;
-            const userHash = await hashPassword(userInput);
+        function checkPassword() {
+            const userInput = document.getElementById('passwordInput').value.trim();
             const errorDiv = document.getElementById('errorMessage');
 
-            if (userHash === correctHash) {
+            if (userInput === "History2026") {
                 errorDiv.style.display = "none";
                 alert("Access Granted!");
-                window.location.href = "portal.html"; // This links it!
-}
-                // NEXT STEP: Redirecting to the unit dashboard will go here
+                window.location.href = "portal.html";
             } else {
                 errorDiv.style.display = "block";
                 document.getElementById('passwordInput').value = '';
