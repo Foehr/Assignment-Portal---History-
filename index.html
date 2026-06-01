@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Portal | Secure Gateway</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; padding: 1rem; }
+        .login-card { background: rgba(255, 255, 255, 0.95); padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center; max-width: 420px; width: 100%; transition: all 0.3s ease; }
+        .icon-wrapper { background: #eef2ff; color: #4f46e5; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 1.5rem; }
+        h2 { color: #1f2937; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+        p { color: #6b7280; font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.4; }
+        .input-group { position: relative; margin-bottom: 1.5rem; text-align: left; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        input[type="password"] { width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; outline: none; transition: all 0.2s ease; background-color: #f9fafb; }
+        input[type="password"]:focus { border-color: #4f46e5; background-color: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        button { width: 100%; background: #4f46e5; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s ease; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
+        button:hover { background: #4338ca; }
+        button:active { transform: scale(0.98); }
+        .error { color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 10px; border-radius: 6px; margin-top: 1.2rem; font-size: 0.85rem; font-weight: 500; display: none; animation: shake 0.2s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="icon-wrapper">🔒</div>
+        <h2>Class Portal</h2>
+        <p>Enter the classroom password to unlock assignments and resources.</p>
+        
+        <div class="input-group">
+            <label for="passwordInput">Security Key</label>
+            <input type="password" id="passwordInput" placeholder="••••••••••••" onkeydown="if(event.key==='Enter') checkPassword()">
+        </div>
+        
+        <button onclick="checkPassword()">Unlock Portal</button>
+        <div class="error" id="errorMessage">Incorrect security key. Please try again.</div>
+    </div>
+
+    <script>
+        // Password hash for: SecretClass2026
+        const correctHash = "efea28fa4bf80572da9bf7bbf3bfa099d34346bb7be07797825b59639535b91b";
+
+        async function hashPassword(string) {
+            const utf8 = new TextEncoder().encode(string);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function checkPassword() {
+            const userInput = document.getElementById('passwordInput').value;
+            const userHash = await hashPassword(userInput);
+            const errorDiv = document.getElementById('errorMessage');
+
+            if (userHash === correctHash) {
+                errorDiv.style.display = "none";
+                alert("Access Granted!");
+                // NEXT STEP: Redirecting to the unit dashboard will go here
+            } else {
+                errorDiv.style.display = "block";
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
