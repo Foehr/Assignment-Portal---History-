@@ -57,6 +57,8 @@
             if (userHash === correctHash) {
                 errorDiv.style.display = "none";
                 alert("Access Granted!");
+                window.location.href = "portal.html"; // This links it!
+}
                 // NEXT STEP: Redirecting to the unit dashboard will go here
             } else {
                 errorDiv.style.display = "block";
