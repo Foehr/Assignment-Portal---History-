@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Assignment Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #f3f4f6; color: #1f2937; padding: 2rem 1rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        header { margin-bottom: 2rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 1rem; }
+        h1 { color: #111827; font-size: 2rem; }
+        
+        /* Unit Navigation Tabs */
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1px; }
+        .tab-btn { background: #e5e7eb; border: none; padding: 10px 20px; font-weight: 600; border-radius: 6px 6px 0 0; cursor: pointer; color: #4b5563; transition: all 0.2s; }
+        .tab-btn.active { background: #4f46e5; color: white; }
+        
+        .unit-content { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .prompt { background: #fef3c7; border-left: 4px solid #d97706; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; font-style: italic; }
+        
+        /* The Writing Area */
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
+        textarea { width: 100%; height: 300px; padding: 1rem; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1.05rem; line-height: 1.5; resize: vertical; outline: none; transition: border 0.2s; }
+        textarea:focus { border-color: #4f46e5; }
+        
+        /* Warning Text styling */
+        .warning-msg { color: #b91c1c; font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
+        
+        .submit-btn { background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 1rem; float: right; transition: background 0.2s; }
+        .submit-btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
 
+    <div class="container">
+        <header>
+            <h1>📜 History Assignment Portal</h1>
+            <p>Type your responses directly into the box below. Copy/Paste has been disabled.</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchUnit(1)">Unit 1: The American Revolution</button>
+            <button class="tab-btn" onclick="switchUnit(2)">Unit 2: The Constitution</button>
+            <button class="tab-btn" onclick="switchUnit(3)">Unit 3: Westward Expansion</button>
+        </div>
+
+        <div class="unit-content">
+            <div id="unit1" class="unit-section">
+                <h2>Unit 1 Essay Prompt</h2>
+                <div class="prompt">
+                    "Analyze the social and economic impacts of the Stamp Act of 1765 on the American colonists. What was the primary catalyst for organized resistance?"
+                </div>
+            </div>
+
+            <div id="unit2" class="unit-section" style="display:none;">
+                <h2>Unit 2 Essay Prompt</h2>
+                <div class="prompt">
+                    "Explain the compromises made during the Constitutional Convention of 1845 regarding representation, and how they shaped the legislative branch."
+                </div>
+            </div>
+
+            <div id="unit3" class="unit-section" style="display:none;">
+                <h2>Unit 3 Essay Prompt</h2>
+                <div class="prompt">
+                    "Discuss the concept of Manifest Destiny. How did this ideology impact domestic policy and native populations during the 19th century?"
+                </div>
+            </div>
+
+            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e5e7eb;">
+            
+            <label for="studentName">Student Name:</label>
+            <input type="text" id="studentName" style="width: 100%; padding: 10px; margin-bottom: 1.5rem; border: 2px solid #d1d5db; border-radius: 6px;" placeholder="First and Last Name">
+
+            <label for="essayResponse">Your Essay Response:</label>
+            <textarea id="essayResponse" 
+                      placeholder="Start typing your essay here..."
+                      onpaste="return false;" 
+                      ondrop="return false;" 
+                      autocomplete="off"></textarea>
+            
+            <div id="pasteWarning" class="warning-msg">⚠️ Copying and pasting is disabled for this assignment. Please type your response manually.</div>
+
+            <button class="submit-btn" onclick="submitWork()">Submit Assignment</button>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching logic for multiple Units
+        function switchUnit(unitNumber) {
+            // Hide all sections
+            document.querySelectorAll('.unit-section').forEach(el => el.style.display = 'none');
+            // Remove active style from tabs
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show selected section and activate tab
+            document.getElementById('unit' + unitNumber).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        // Strict Anti-Paste Event Listeners
+        const essayArea = document.getElementById('essayResponse');
+        const warning = document.getElementById('pasteWarning');
+
+        // Blocks Ctrl+V, Cmd+V, and Shift+Insert keyboard shortcuts
+        essayArea.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                e.preventDefault();
+                showWarning();
+            }
+        });
+
+        // Blocks right-click pasting context menus completely
+        essayArea.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        function showWarning() {
+            warning.style.display = 'block';
+            setTimeout(() => { warning.style.display = 'none'; }, 4000);
+        }
+
+        // Database Submission Placeholder for Step 3
+        function submitWork() {
+            const name = document.getElementById('studentName').value;
+            const text = essayArea.value;
+            if(!name || !text) {
+                alert("Please fill out your name and provide a response.");
+                return;
+            }
+            alert("Step 2 Test Success! Your text is safe. Next, we will link this to our permanent database.");
+        }
+    </script>
+</body>
+</html>
