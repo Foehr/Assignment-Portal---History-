@@ -32,6 +32,12 @@
         .essay-body { font-size: 1.05rem; line-height: 1.7; color: #374151; white-space: pre-wrap; word-break: break-word; }
         .no-data { text-align: center; padding: 3rem; background: white; border-radius: 8px; color: #6b7280; font-size: 1.1rem; }
         .stats-badge { background: #f3f4f6; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
+        
+        /* Security Ribbon Elements */
+        .security-ribbon { display: flex; gap: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; padding: 10px 15px; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; flex-wrap: wrap; }
+        .metric { font-weight: 600; }
+        .flagged { color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .clean { color: #047857; }
     </style>
 </head>
 <body>
@@ -45,7 +51,7 @@
             <header>
                 <div>
                     <h1>🗃️ Essay Vault Dashboard</h1>
-                    <p style="color: #6b7280; margin-top: 4px;">Review and grade secure student portal submissions.</p>
+                    <p style="color: #6b7280; margin-top: 4px;">Review student responses alongside live forensic key tracking.</p>
                 </div>
                 <div class="stats-badge" id="submissionCount">Total Loaded: 0</div>
             </header>
@@ -77,6 +83,7 @@
         const SUPABASE_URL = "https://ucxwiywoxpeqapgwhsmi.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjeHdpeXdveHBlcWFwZ3doc21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE0NzMsImV4cCI6MjA5NTkwNzQ3M30.VToVqabwqL7d1CpBkxztJt4hCQL-koX4Eq7rd7lx9Sg";
         let allSubmissions = [];
+        
         const unitSelect = document.getElementById('filterUnit');
         for (let i = 1; i <= 12; i++) {
             const opt = document.createElement('option');
@@ -84,6 +91,7 @@
             opt.innerText = `Unit ${i}`;
             unitSelect.appendChild(opt);
         }
+        
         function verifyPassword() {
             const input = document.getElementById('passwordInput').value;
             if (input === MASTER_PASSWORD) {
@@ -94,9 +102,11 @@
                 alert("❌ Incorrect password. Access denied.");
             }
         }
+        
         document.getElementById('passwordInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') verifyPassword();
         });
+        
         async function fetchSubmissions() {
             const container = document.getElementById('essaysContainer');
             container.innerHTML = '<div class="no-data">Fetching secure payloads from database...</div>';
@@ -109,33 +119,48 @@
                         'Content-Type': 'application/json'
                     }
                 });
-                if (!response.ok) throw new Error("Vault extraction rejected.");
+                if (!response.ok) throw new Error();
                 allSubmissions = await response.json();
                 applyFilters();
             } catch (error) {
                 container.innerHTML = '<div class="no-data" style="color: #b91c1c;">❌ Error pulling data from vault.</div>';
-                console.error(error);
             }
         }
+        
         function applyFilters() {
             const courseFilter = document.getElementById('filterCourse').value;
             const unitFilter = document.getElementById('filterUnit').value;
             const container = document.getElementById('essaysContainer');
+            
             const filtered = allSubmissions.filter(sub => {
                 const matchCourse = (courseFilter === "ALL" || sub.course === courseFilter);
                 const matchUnit = (unitFilter === "ALL" || sub.unit === parseInt(unitFilter));
                 return matchCourse && matchUnit;
             });
+            
             document.getElementById('submissionCount').innerText = `Total Loaded: ${filtered.length}`;
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="no-data">No essays found matching your current filters.</div>';
                 return;
             }
+            
             container.innerHTML = filtered.map(sub => {
                 const dateOpts = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
                 const formattedDate = new Date(sub.created_at).toLocaleDateString('en-US', dateOpts);
+                
+                const charCount = sub.essay_text ? sub.essay_text.length : 0;
+                const keys = sub.keystrokes || 0;
+                const alerts = sub.lockdown_violations || 0;
+                const awaySec = sub.seconds_away || 0;
+                
+                // Flag if keystrokes are impossibly low compared to written text
+                const isSuspicious = charCount > 10 && (keys / charCount < 0.5);
+                const keyClass = isSuspicious ? 'flagged' : 'clean';
+                const alertClass = alerts > 0 ? 'flagged' : 'clean';
+                const awayClass = awaySec > 0 ? 'flagged' : 'clean';
+                
                 return `
-                    <div class="essay-card">
+                    <div class="essay-card" style="border-left-color: ${alerts > 0 || isSuspicious ? '#ef4444' : '#4f46e5'}">
                         <div class="essay-header">
                             <div class="student-name">${escapeHTML(sub.student_name)}</div>
                             <div style="display: flex; gap: 8px;">
@@ -144,11 +169,20 @@
                             </div>
                             <div class="timestamp">${formattedDate}</div>
                         </div>
+                        
+                        <div class="security-ribbon">
+                            <div>Character Count: <span class="metric">${charCount}</span></div>
+                            <div>Physical Keystrokes: <span class="metric ${keyClass}">${keys} ${isSuspicious ? '⚠️ [SUSPICIOUSLY LOW]' : '✓'}</span></div>
+                            <div>Tab Violations: <span class="metric ${alertClass}">${alerts}</span></div>
+                            <div>Time Spent Away: <span class="metric ${awayClass}">${awaySec}s</span></div>
+                        </div>
+                        
                         <div class="essay-body">${escapeHTML(sub.essay_text)}</div>
                     </div>
                 `;
             }).join('');
         }
+        
         function escapeHTML(str) {
             return str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)) : '';
         }
