@@ -158,13 +158,23 @@
             }
         });
 
-        // 4. Time Metric Tripwire
-        window.addEventListener('blur', () => {
+        // 4. Mobile & Desktop Cross-Platform Lockdown Trigger
+        function handleUserExit() {
             if (nameField.value.trim() || essayArea.value.trim()) {
-                lockdownViolations++;
-                exitTime = Date.now();
-                document.getElementById('violationCounter').innerText = lockdownViolations;
-                document.getElementById('lockdownOverlay').style.display = 'flex';
+                if (!exitTime) {
+                    lockdownViolations++;
+                    exitTime = Date.now(); 
+                    document.getElementById('violationCounter').innerText = lockdownViolations;
+                    document.getElementById('lockdownOverlay').style.display = 'flex';
+                }
+            }
+        }
+
+        window.addEventListener('blur', handleUserExit);
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                handleUserExit();
             }
         });
 
@@ -173,7 +183,7 @@
                 const secondsElapsed = Math.round((Date.now() - exitTime) / 1000);
                 totalSecondsAway += secondsElapsed;
                 document.getElementById('timeCounter').innerText = totalSecondsAway;
-                exitTime = null;
+                exitTime = null; 
             }
             document.getElementById('lockdownOverlay').style.display = 'none';
         }
