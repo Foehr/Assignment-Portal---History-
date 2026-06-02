@@ -16,7 +16,7 @@
         .unit-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 4px; }
         .unit-btn { background: #e5e7eb; border: none; padding: 8px 14px; font-weight: 600; border-radius: 6px 6px 0 0; cursor: pointer; color: #4b5563; }
         .unit-btn.active { background: #fff; color: #4f46e5; border: 2px solid #e5e7eb; border-bottom-color: #fff; font-weight: 700; margin-bottom: -2px; }
-        .panel-content { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .panel-content { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .prompt-box { background: #fef3c7; border-left: 4px solid #d97706; padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; font-style: italic; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
         input[type="text"] { width: 100%; padding: 12px; margin-bottom: 1.5rem; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1rem; }
@@ -24,9 +24,23 @@
         .warning-msg { color: #b91c1c; font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
         .submit-btn { background: #10b981; color: white; border: none; padding: 14px 28px; border-radius: 6px; font-size: 1.05rem; font-weight: 600; cursor: pointer; margin-top: 1rem; float: right; }
         .submit-btn:disabled { background: #a7f3d0; cursor: not-allowed; }
+        .stats-footer { margin-top: 10px; font-size: 0.85rem; color: #6b7280; font-weight: 500; }
+        
+        /* Lockdown Screen Overlay */
+        #lockdownOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17, 24, 39, 0.98); z-index: 99999; color: white; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; }
+        #lockdownOverlay h2 { color: #ef4444; font-size: 2.5rem; margin-bottom: 1rem; }
+        #lockdownOverlay p { font-size: 1.2rem; margin-bottom: 2rem; max-width: 600px; color: #d1d5db; }
+        #unlockBtn { background: #ef4444; color: white; border: none; padding: 16px 32px; font-size: 1.1rem; font-weight: 700; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        #unlockBtn:hover { background: #dc2626; }
     </style>
 </head>
 <body>
+    <div id="lockdownOverlay">
+        <h2>⚠️ PORTAL LOCKED DOWN</h2>
+        <p>Security violation: You exited the assignment page. This event has been tracked and logged to the teacher dashboard.</p>
+        <button id="unlockBtn" onclick="requestUnlock()">Acknowledge & Unlock Page</button>
+    </div>
+
     <div class="container">
         <header>
             <h1>📜 History Assignment Portal</h1>
@@ -45,10 +59,15 @@
             </div>
             <hr style="margin: 2.5rem 0; border: 0; border-top: 2px solid #e5e7eb;">
             <label for="studentName">Student Name:</label>
-            <input type="text" id="studentName" placeholder="First and Last Name" autocomplete="off" onpaste="return false;" ondrop="return false;">
+            <input type="text" id="studentName" placeholder="First and Last Name" autocomplete="off">
             <label for="essayResponse">Your Essay Response:</label>
-            <textarea id="essayResponse" placeholder="Start typing your essay response here..." onpaste="return false;" ondrop="return false;" autocomplete="off"></textarea>
+            <textarea id="essayResponse" placeholder="Start typing your essay response here..." autocomplete="off"></textarea>
             <div id="pasteWarning" class="warning-msg">⚠️ Copying and pasting is disabled. Please type manually.</div>
+            
+            <div class="stats-footer">
+                Diagnostic Feedback: <span id="keyCounter">0</span> keystrokes | Alerts: <span id="violationCounter" style="color:#ef4444; font-weight:700;">0</span> | Total Away: <span id="timeCounter">0</span>s
+            </div>
+            
             <button class="submit-btn" id="submitBtn" onclick="submitWork()">Submit Assignment</button>
             <div style="clear: both;"></div>
         </div>
@@ -61,8 +80,17 @@
         };
         const SUPABASE_URL = "https://ucxwiywoxpeqapgwhsmi.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjeHdpeXdveHBlcWFwZ3doc21pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE0NzMsImV4cCI6MjA5NTkwNzQ3M30.VToVqabwqL7d1CpBkxztJt4hCQL-koX4Eq7rd7lx9Sg";
+        
         let selectedCourse = "APUSH";
         let activeUnits = { APUSH: 1, APHUG: 1, USR: 1 };
+        
+        // Anti-Cheat Variables
+        let keystrokeCount = 0;
+        let lockdownViolations = 0;
+        let totalSecondsAway = 0;
+        let exitTime = null;
+        let lastTextLength = 0;
+
         function renderPortal() {
             const tabsContainer = document.getElementById('unitTabsContainer');
             tabsContainer.innerHTML = ''; 
@@ -78,28 +106,83 @@
             document.getElementById('assignmentTitle').innerText = `${selectedCourse} - Unit ${activeUnitForCourse}`;
             document.getElementById('assignmentPrompt').innerText = currentCourseConfig.prompts[activeUnitForCourse] || "No custom prompt entered yet.";
         }
+
         function selectCourse(courseCode) {
             selectedCourse = courseCode;
             document.querySelectorAll('.course-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText === courseCode);
             });
-            document.getElementById('essayResponse').value = '';
-            document.getElementById('studentName').value = '';
+            clearInputs();
             renderPortal();
         }
+
         function selectUnit(unitNumber) {
             activeUnits[selectedCourse] = unitNumber;
-            document.getElementById('essayResponse').value = '';
+            clearInputs();
             renderPortal();
         }
+
         const essayArea = document.getElementById('essayResponse');
         const nameField = document.getElementById('studentName');
         const warning = document.getElementById('pasteWarning');
+
+        function clearInputs() {
+            essayArea.value = '';
+            nameField.value = '';
+            lastTextLength = 0;
+        }
+
+        // 1. Desktop Hard Paste Blocks
         [essayArea, nameField].forEach(element => {
             element.addEventListener('paste', e => { e.preventDefault(); showWarning(); });
             element.addEventListener('drop', e => { e.preventDefault(); showWarning(); });
         });
-        function showWarning() { warning.style.display = 'block'; setTimeout(() => { warning.style.display = 'none'; }, 4000); }
+
+        // 2. Keystroke Tracker
+        essayArea.addEventListener('keydown', (e) => {
+            if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) {
+                keystrokeCount++;
+                document.getElementById('keyCounter').innerText = keystrokeCount;
+            }
+        });
+
+        // 3. Mobile Speed-Trap Radar (THE PIXEL/IPHONE FIX)
+        essayArea.addEventListener('input', () => {
+            const currentLength = essayArea.value.length;
+            if (currentLength - lastTextLength > 8) {
+                // If text length jumps by more than 8 chars instantly, strip it out!
+                essayArea.value = essayArea.value.substring(0, lastTextLength);
+                showWarning();
+            } else {
+                lastTextLength = currentLength;
+            }
+        });
+
+        // 4. Time Metric Tripwire
+        window.addEventListener('blur', () => {
+            if (nameField.value.trim() || essayArea.value.trim()) {
+                lockdownViolations++;
+                exitTime = Date.now();
+                document.getElementById('violationCounter').innerText = lockdownViolations;
+                document.getElementById('lockdownOverlay').style.display = 'flex';
+            }
+        });
+
+        function requestUnlock() {
+            if (exitTime) {
+                const secondsElapsed = Math.round((Date.now() - exitTime) / 1000);
+                totalSecondsAway += secondsElapsed;
+                document.getElementById('timeCounter').innerText = totalSecondsAway;
+                exitTime = null;
+            }
+            document.getElementById('lockdownOverlay').style.display = 'none';
+        }
+
+        function showWarning() { 
+            warning.style.display = 'block'; 
+            setTimeout(() => { warning.style.display = 'none'; }, 4000); 
+        }
+
         async function submitWork() {
             const name = nameField.value.trim();
             const text = essayArea.value.trim();
@@ -111,9 +194,26 @@
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions`, {
                     method: 'POST',
                     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_name: name, course: selectedCourse, unit: parseInt(currentUnit), essay_text: text })
+                    body: JSON.stringify({ 
+                        student_name: name, 
+                        course: selectedCourse, 
+                        unit: parseInt(currentUnit), 
+                        essay_text: text,
+                        keystrokes: parseInt(keystrokeCount),
+                        lockdown_violations: parseInt(lockdownViolations),
+                        seconds_away: parseInt(totalSecondsAway)
+                    })
                 });
-                if (response.ok) { alert("✅ Success! Your essay has been securely submitted."); essayArea.value = ''; nameField.value = ''; }
+                if (response.ok) { 
+                    alert("✅ Success! Your essay has been securely submitted."); 
+                    keystrokeCount = 0;
+                    lockdownViolations = 0;
+                    totalSecondsAway = 0;
+                    document.getElementById('keyCounter').innerText = "0";
+                    document.getElementById('violationCounter').innerText = "0";
+                    document.getElementById('timeCounter').innerText = "0";
+                    clearInputs(); 
+                }
                 else { throw new Error(); }
             } catch (error) { alert("❌ Submission failed."); }
             finally { submitBtn.disabled = false; }
