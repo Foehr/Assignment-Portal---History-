@@ -19,7 +19,7 @@
         .panel-content { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .prompt-box { background: #fef3c7; border-left: 4px solid #d97706; padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 0 4px 4px 0; font-style: italic; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
-        input[type="text"] { width: 100%; padding: 12px; margin-bottom: 1.5rem; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1rem; }
+        input[type="text"], input[type="email"] { width: 100%; padding: 12px; margin-bottom: 1.5rem; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1rem; }
         textarea { width: 100%; height: 320px; padding: 1.25rem; border: 2px solid #d1d5db; border-radius: 6px; font-size: 1.05rem; resize: vertical; }
         .warning-msg { color: #b91c1c; font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
         .submit-btn { background: #10b981; color: white; border: none; padding: 14px 28px; border-radius: 6px; font-size: 1.05rem; font-weight: 600; cursor: pointer; margin-top: 1rem; float: right; }
@@ -58,8 +58,13 @@
                 <div id="assignmentPrompt" class="prompt-box">Please wait...</div>
             </div>
             <hr style="margin: 2.5rem 0; border: 0; border-top: 2px solid #e5e7eb;">
+            
             <label for="studentName">Student Name:</label>
             <input type="text" id="studentName" placeholder="First and Last Name" autocomplete="off">
+            
+            <label for="studentEmail">School Email Address:</label>
+            <input type="email" id="studentEmail" placeholder="student@school.edu" autocomplete="off">
+            
             <label for="essayResponse">Your Essay Response:</label>
             <textarea id="essayResponse" placeholder="Start typing your essay response here..." autocomplete="off"></textarea>
             <div id="pasteWarning" class="warning-msg">⚠️ Copying and pasting is disabled. Please type manually.</div>
@@ -84,7 +89,6 @@
         let selectedCourse = "APUSH";
         let activeUnits = { APUSH: 1, APHUG: 1, USR: 1 };
         
-        // Anti-Cheat Variables
         let keystrokeCount = 0;
         let lockdownViolations = 0;
         let totalSecondsAway = 0;
@@ -124,21 +128,21 @@
 
         const essayArea = document.getElementById('essayResponse');
         const nameField = document.getElementById('studentName');
+        const emailField = document.getElementById('studentEmail');
         const warning = document.getElementById('pasteWarning');
 
         function clearInputs() {
             essayArea.value = '';
             nameField.value = '';
+            emailField.value = '';
             lastTextLength = 0;
         }
 
-        // 1. Desktop Hard Paste Blocks
-        [essayArea, nameField].forEach(element => {
+        [essayArea, nameField, emailField].forEach(element => {
             element.addEventListener('paste', e => { e.preventDefault(); showWarning(); });
             element.addEventListener('drop', e => { e.preventDefault(); showWarning(); });
         });
 
-        // 2. Keystroke Tracker
         essayArea.addEventListener('keydown', (e) => {
             if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) {
                 keystrokeCount++;
@@ -146,11 +150,9 @@
             }
         });
 
-        // 3. Mobile Speed-Trap Radar (THE PIXEL/IPHONE FIX)
         essayArea.addEventListener('input', () => {
             const currentLength = essayArea.value.length;
             if (currentLength - lastTextLength > 8) {
-                // If text length jumps by more than 8 chars instantly, strip it out!
                 essayArea.value = essayArea.value.substring(0, lastTextLength);
                 showWarning();
             } else {
@@ -158,9 +160,8 @@
             }
         });
 
-        // 4. Mobile & Desktop Cross-Platform Lockdown Trigger
         function handleUserExit() {
-            if (nameField.value.trim() || essayArea.value.trim()) {
+            if (nameField.value.trim() || emailField.value.trim() || essayArea.value.trim()) {
                 if (!exitTime) {
                     lockdownViolations++;
                     exitTime = Date.now(); 
@@ -195,17 +196,20 @@
 
         async function submitWork() {
             const name = nameField.value.trim();
+            const email = emailField.value.trim();
             const text = essayArea.value.trim();
             const currentUnit = activeUnits[selectedCourse];
             const submitBtn = document.getElementById('submitBtn');
-            if(!name || !text) { alert("Please provide your name and write an essay response."); return; }
+            
+            if(!name || !email || !text) { alert("Please complete your name, email, and essay response."); return; }
             submitBtn.disabled = true;
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions`, {
                     method: 'POST',
                     headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        student_name: name, 
+                        student_name: name,
+                        student_email: email, 
                         course: selectedCourse, 
                         unit: parseInt(currentUnit), 
                         essay_text: text,
