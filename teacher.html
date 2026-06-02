@@ -26,14 +26,15 @@
         .essays-grid { display: flex; flex-direction: column; gap: 1.5rem; }
         .essay-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #4f46e5; position: relative; }
         .essay-header { display: flex; justify-content: space-between; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.75rem; margin-bottom: 1rem; }
+        .student-title-block { display: flex; flex-direction: column; }
         .student-name { font-size: 1.25rem; font-weight: 700; color: #111827; }
+        .student-email { font-size: 0.9rem; color: #6b7280; font-weight: 500; margin-top: 2px; }
         .meta-tag { background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; }
         .timestamp { font-size: 0.85rem; color: #9ca3af; align-self: center; }
         .essay-body { font-size: 1.05rem; line-height: 1.7; color: #374151; white-space: pre-wrap; word-break: break-word; }
         .no-data { text-align: center; padding: 3rem; background: white; border-radius: 8px; color: #6b7280; font-size: 1.1rem; }
         .stats-badge { background: #f3f4f6; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.95rem; }
         
-        /* Security Ribbon Elements */
         .security-ribbon { display: flex; gap: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; padding: 10px 15px; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; flex-wrap: wrap; }
         .metric { font-weight: 600; }
         .flagged { color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
@@ -152,8 +153,8 @@
                 const keys = sub.keystrokes || 0;
                 const alerts = sub.lockdown_violations || 0;
                 const awaySec = sub.seconds_away || 0;
+                const emailDisplay = sub.student_email ? escapeHTML(sub.student_email) : 'No email logged';
                 
-                // Flag if keystrokes are impossibly low compared to written text
                 const isSuspicious = charCount > 10 && (keys / charCount < 0.5);
                 const keyClass = isSuspicious ? 'flagged' : 'clean';
                 const alertClass = alerts > 0 ? 'flagged' : 'clean';
@@ -162,12 +163,15 @@
                 return `
                     <div class="essay-card" style="border-left-color: ${alerts > 0 || isSuspicious ? '#ef4444' : '#4f46e5'}">
                         <div class="essay-header">
-                            <div class="student-name">${escapeHTML(sub.student_name)}</div>
-                            <div style="display: flex; gap: 8px;">
+                            <div class="student-title-block">
+                                <div class="student-name">${escapeHTML(sub.student_name)}</div>
+                                <div class="student-email">${emailDisplay}</div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-self: flex-start;">
                                 <span class="meta-tag" style="background:#e0e7ff; color:#4338ca;">${sub.course}</span>
                                 <span class="meta-tag" style="background:#fef3c7; color:#d97706;">Unit ${sub.unit}</span>
                             </div>
-                            <div class="timestamp">${formattedDate}</div>
+                            <div class="timestamp" style="align-self: flex-start;">${formattedDate}</div>
                         </div>
                         
                         <div class="security-ribbon">
