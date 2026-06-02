@@ -160,7 +160,11 @@
             }
         });
 
+      // 4. Mobile & Desktop Cross-Platform Lockdown Trigger
         function handleUserExit() {
+            // FIX: If they are actively clicking submit, ignore the exit trigger!
+            if (document.activeElement && document.activeElement.id === 'submitBtn') return;
+
             if (nameField.value.trim() || emailField.value.trim() || essayArea.value.trim()) {
                 if (!exitTime) {
                     lockdownViolations++;
@@ -170,7 +174,15 @@
                 }
             }
         }
-
+function requestUnlock() {
+            if (exitTime) {
+                const secondsElapsed = Math.round((Date.now() - exitTime) / 1000);
+                totalSecondsAway += secondsElapsed;
+                document.getElementById('timeCounter').innerText = totalSecondsAway;
+                exitTime = null; 
+            }
+            document.getElementById('lockdownOverlay').style.display = 'none';
+        }
         window.addEventListener('blur', handleUserExit);
         
         document.addEventListener('visibilitychange', () => {
